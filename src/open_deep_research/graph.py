@@ -37,6 +37,7 @@ from open_deep_research.utils import (
     select_and_execute_search,
     get_today_str
 )
+from post_processing import final_report_post_processing
 
 ## Nodes -- 
 
@@ -451,6 +452,7 @@ def compile_final_report(state: ReportState, config: RunnableConfig):
 
     # Compile final report
     all_sections = "\n\n".join([s.content for s in sections])
+    all_sections = final_report_post_processing(all_sections)
     
     print("--"*20)
     print("Final report compiled with sections:")

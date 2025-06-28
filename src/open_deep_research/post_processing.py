@@ -52,7 +52,7 @@ def final_report_post_processing(all_sections: str) -> str:
     # { "url": new_number }
     url_to_new_num = {url: i + 1 for i, url in enumerate(unique_sources_map.keys())}
 
-    final_source_list = ["### Sources"]
+    final_source_list = ["## Sources"]
     for url, new_num in url_to_new_num.items():
         desc = unique_sources_map[url]['desc']
         final_source_list.append(f"[{new_num}] {desc}: {url}")

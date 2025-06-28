@@ -37,7 +37,7 @@ from open_deep_research.utils import (
     select_and_execute_search,
     get_today_str
 )
-from post_processing import final_report_post_processing
+from src.open_deep_research.post_processing import final_report_post_processing
 
 ## Nodes -- 
 

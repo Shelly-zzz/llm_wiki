@@ -87,6 +87,7 @@ def final_report_post_processing(all_sections: str) -> str:
         # It finds one or more brackets, captures the digits inside, then finds one or more closing brackets.
         # This correctly handles [1], [[1]], and applies the replacement to each number in [5][6] sequentially.
         processed_content = re.sub(r'\[+([0-9]+)\]+', replacer, content)
+        processed_content = re.sub(r'\]\[', '] [', processed_content)
         processed_content_parts.append(processed_content)
 
     # Assemble the final report

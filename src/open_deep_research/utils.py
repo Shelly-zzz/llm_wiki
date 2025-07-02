@@ -48,7 +48,17 @@ def get_config_value(value):
     Helper function to handle string, dict, and enum cases of configuration values
     """
     if isinstance(value, str):
-        return value
+         # 尝试将字符串解析为 JSON
+        try:
+            parsed_value = json.loads(value)
+            # 如果解析成功且是字典，则返回字典
+            if isinstance(parsed_value, dict):
+                return parsed_value
+            # 如果解析成功但不是字典（例如 "null", "true", 123），则返回解析后的值
+            return parsed_value
+        except json.JSONDecodeError:
+            # 如果不是有效的 JSON 字符串，则返回原始字符串
+            return value
     elif isinstance(value, dict):
         return value
     else:
@@ -74,6 +84,9 @@ def get_search_params(search_api: str, search_api_config: Optional[Dict[str, Any
         "pubmed": ["top_k_results", "email", "api_key", "doc_content_chars_max"],
         "linkup": ["depth"],
         "googlesearch": ["max_results"],
+        'local_json': ["max_results"],
+        'wikipedia': ["max_results"],
+        'multi_source': ["max_results"]
     }
 
     # Get the list of accepted parameters for the given search API
@@ -1126,6 +1139,7 @@ async def google_search_async(search_queries: Union[str, List[str]], max_results
                                 try:
                                     await asyncio.sleep(0.2 + random.random() * 0.6)
                                     async with session.get(url, headers=headers, timeout=10) as response:
+                                        print(response.status)
                                         if response.status == 200:
                                             # Check content type to handle binary files
                                             content_type = response.headers.get('Content-Type', '').lower()

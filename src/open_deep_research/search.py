@@ -334,8 +334,7 @@ async def google_search_async(search_queries: Union[str, List[str]], max_results
                             'num': num
                         }
                         url = 'https://www.googleapis.com/customsearch/v1'
-                        proxy = 'http://127.0.0.1:7890'
-
+                        proxy = os.environ.get("http_proxy")
                         print(f"Requesting {num} results for '{query}' from Google API...")
 
                         async with aiohttp.ClientSession() as session:
@@ -631,7 +630,7 @@ async def select_and_execute_search(search_api: str, query_list: list[str], para
 
     # 调试信息：打印当前使用的搜索API
     print(f"🔧 调试信息 - 传入的search_api参数: {search_api}")
-    print(f"🔧 调试信息 - 环境变量SEARCH_API: {os.environ.get('SEARCH_API')}")
+    # print(f"🔧 调试信息 - 环境变量SEARCH_API: {os.environ.get('SEARCH_API')}")
     print(f"🔧 调试信息 - 搜索查询: {query_list}")
 
 

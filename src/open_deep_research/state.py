@@ -29,6 +29,11 @@ class Queries(BaseModel):
         description="List of search queries.",
     )
 
+class Report(BaseModel):
+    translated_report: str = Field(
+        description="The Chinese version of the report.",
+    )
+
 class Feedback(BaseModel):
     grade: Literal["pass","fail"] = Field(
         description="Evaluation result indicating whether the response meets requirements ('pass') or needs revision ('fail')."

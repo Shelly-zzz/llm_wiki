@@ -511,3 +511,19 @@ Example 2 (for a scientific article):
 ```
 
 Remember, your goal is to create a summary that can be easily understood and utilized by a downstream research agent while preserving the most critical information from the original webpage."""
+
+translate_instruction = """
+You are a translation assistant.
+
+<Target language>
+中文
+</Target language>
+
+<Text to translate>
+{input_text}
+</Text to translate>
+
+<Task>
+Translate the text above to the target language, preserving meaning and style.
+</Task>
+"""

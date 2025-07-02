@@ -16,7 +16,8 @@ from open_deep_research.state import (
     SectionState,
     SectionOutputState,
     Queries,
-    Feedback
+    Feedback,
+    Report
 )
 
 from open_deep_research.prompts import (
@@ -26,7 +27,9 @@ from open_deep_research.prompts import (
     section_writer_instructions,
     final_section_writer_instructions,
     section_grader_instructions,
-    section_writer_inputs
+    section_writer_inputs, 
+    translate_instruction
+
 )
 
 from open_deep_research.configuration import WorkflowConfiguration
@@ -34,10 +37,10 @@ from open_deep_research.utils import (
     format_sections, 
     get_config_value, 
     get_search_params, 
-    select_and_execute_search,
     get_today_str
 )
-from src.open_deep_research.post_processing import final_report_post_processing
+from open_deep_research.search import select_and_execute_search
+from open_deep_research.post_processing import final_report_post_processing
 
 ## Nodes -- 
 
@@ -61,13 +64,12 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
 
     # Inputs
     topic = state["topic"]
-
+    print(topic)
     # Get list of feedback on the report plan
     feedback_list = state.get("feedback_on_report_plan", [])
 
     # Concatenate feedback on the report plan into a single string
     feedback = " /// ".join(feedback_list) if feedback_list else ""
-
     # Get configuration
     configurable = WorkflowConfiguration.from_runnable_config(config)
     report_structure = configurable.report_structure
@@ -84,6 +86,7 @@ async def generate_report_plan(state: ReportState, config: RunnableConfig):
     writer_provider = get_config_value(configurable.writer_provider)
     writer_model_name = get_config_value(configurable.writer_model)
     writer_model_kwargs = get_config_value(configurable.writer_model_kwargs or {})
+    print(type(writer_model_kwargs))
     writer_model = init_chat_model(model=writer_model_name, model_provider=writer_provider, model_kwargs=writer_model_kwargs) 
     structured_llm = writer_model.with_structured_output(Queries)
 
@@ -484,6 +487,47 @@ def initiate_final_section_writing(state: ReportState):
         if not s.research
     ]
 
+
+async def translate_node(state: ReportState, config: RunnableConfig):
+    print("8. Translating the final report...")
+    """
+    Translate the compiled report into the target language.
+    
+    This node produces a translated version of the final report
+    
+    Args:
+        state: final report with English version
+        
+    Returns:
+        Dict containing the translated report
+    """
+
+    # Get sections
+    final_report = state["final_report"]
+    configurable = WorkflowConfiguration.from_runnable_config(config)
+    # Update sections with completed content while maintaining original order
+    trainslate_provider = get_config_value(configurable.trainslate_provider)
+    trainslate_model_name = get_config_value(configurable.trainslate_model)
+    trainslate_model_kwargs = get_config_value(configurable.trainslate_model_kwargs or {})
+    trainslate_model_kwargs = {"base_url":"https://pro.xiaoai.plus/v1"}
+    trainslate_model = init_chat_model(model=trainslate_model_name, model_provider=trainslate_provider, model_kwargs=trainslate_model_kwargs) 
+    structured_llm = trainslate_model.with_structured_output(Report)
+
+    # Format system instructions
+    system_instructions_query = translate_instruction.format(
+        input_text=final_report,
+    )
+
+    # Generate queries  
+    translated_final_report = await structured_llm.ainvoke([SystemMessage(content=system_instructions_query),
+                                     HumanMessage(content="Generate the chinese version of the report.")])
+    print("--"*20)
+    print("Translated Final report")
+    print(translated_final_report)
+    print(translated_final_report.translated_report)
+    print("--"*20)
+    return {"final_report": translated_final_report.translated_report, "source_str": state["source_str"]}
+
 # Report section sub-graph -- 
 
 # Add nodes 
@@ -507,6 +551,7 @@ builder.add_node("build_section_with_web_research", section_builder.compile())
 builder.add_node("gather_completed_sections", gather_completed_sections)
 builder.add_node("write_final_sections", write_final_sections)
 builder.add_node("compile_final_report", compile_final_report)
+builder.add_node("translate", translate_node)
 
 # Add edges
 builder.add_edge(START, "generate_report_plan")
@@ -514,6 +559,7 @@ builder.add_edge("generate_report_plan", "human_feedback")
 builder.add_edge("build_section_with_web_research", "gather_completed_sections")
 builder.add_conditional_edges("gather_completed_sections", initiate_final_section_writing, ["write_final_sections"])
 builder.add_edge("write_final_sections", "compile_final_report")
-builder.add_edge("compile_final_report", END)
+builder.add_edge("compile_final_report", "translate")
+builder.add_edge("translate", END)
 
 graph = builder.compile()

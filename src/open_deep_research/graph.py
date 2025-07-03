@@ -548,13 +548,13 @@ async def post_processing(state: ReportState, config: RunnableConfig):
 
     # 获取翻译后的报告
     final_report = state["final_report"]
-    final_report = format_adjusting(final_report)
-    print(final_report)
-
-    print("--" * 20)
-    print("格式调整后报告")
-    print(final_report)
-    print("--" * 20)
+    # final_report = format_adjusting(final_report)
+    # print(final_report)
+    #
+    # print("--" * 20)
+    # print("格式调整后报告")
+    # print(final_report)
+    # print("--" * 20)
 
     # 获取配置
     configurable = WorkflowConfiguration.from_runnable_config(config)
@@ -572,16 +572,20 @@ async def post_processing(state: ReportState, config: RunnableConfig):
 
     # 构建系统指令
     system_instructions = (
-        "你是一个专业的文本编辑助手。你的任务是对报告进行语义去重处理。"
-        "请仔细分析报告内容，识别不同章节中表达相同的部分（语义重复）。"
-        "对于重复的语义内容，只保留第一次出现的地方，删除后续重复的部分。"
-        "注意保持报告的整体结构和连贯性，资料来源和正文引用必须完整保留。"
-        "务必注意，不要过多地删减内容，如果没有语义重复，就不需要删减任何内容！"
+        "你是一个专业的文本编辑助手。你的任务是对报告进行后处理。"
+        "请按照以下工作流完成后处理任务：\n"
+        "1.将每条'### 资料来源'的内容整理为这样的格式：[编号] 标题：URL或文件路径。"
+        "例如：'[1] 巴里·劳德米尔克: postinfo\Barry Loudermilk.json'或者是'[2] 美国众议院书记官办公室 - 巴里·劳德米尔克: https://clerk.house.gov/members/L000583'"
+        "如果资料来源存在信息缺失（例如缺少标题、缺少URL或文件路径），则删除这条资料来源。\n"
+        "2.将所有'### 资料来源'整合起来，按照URL或文件路径进行去重，并重新从1到n进行标号，统一放到报告的最后，记录在'## 资料来源'下（注意改为二级标题）。注意正文中引用的资料来源也需要跟着重新标号\n"
+        "3.正文中如果出现连续两个以上的引用（比如'[2][3]'），引用标号之间必须留一个空格（要改为'[2] [3]'）\n"
+        "4.对报告正文（不包括资料来源部分）进行语义去重。具体来说，需要识别不同章节中意思相近或表达相同的部分，对于重复的语义内容，只保留第一次出现的地方，删除后续重复的部分。"
+        "务必注意，不要过多地删减内容，如果没有语义重复，则不需要删减任何内容！"
     )
 
     # 用户指令
     user_instruction = (
-        f"请对以下报告内容进行语义去重处理，对各章节语义重复的信息进行去重，只保留第一次出现的内容：\n\n"
+        f"请对以下报告内容按照指令要求进行后处理，输出后处理之后的报告：\n\n"
         f"{final_report}"
     )
 

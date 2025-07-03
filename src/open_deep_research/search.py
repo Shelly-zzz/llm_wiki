@@ -254,14 +254,15 @@ async def local_json_search(search_queries: list[str], max_results: int = 3) -> 
     if not excel_path.exists():
         print(f"Warning: Excel file {excel_file_path} not found")
         return []
-    # 读取Excel文件，假设第二列是姓名，第三列是wiki链接
-    df = pd.read_excel(excel_path)
-    # 获取第二列（姓名）和第三列（wiki链接）
-    name_column = df.iloc[:, 1]  # 第二列
 
     # 使用线程池执行同步的Wikipedia搜索
     loop = asyncio.get_event_loop()
-    tasks = [loop.run_in_executor(None, search_localx_sync, query,name_column) for query in search_queries]
+    # 读取Excel文件，假设第二列是姓名，第三列是wiki链接
+    df = await asyncio.to_thread(pd.read_excel, "postinfo/wiki_results.xlsx")
+    # 获取第二列（姓名）和第三列（wiki链接）
+    name_column = df.iloc[:, 1]  # 第二列
+
+    tasks = [asyncio.to_thread(search_localx_sync, query, name_column) for query in search_queries]
     return await asyncio.gather(*tasks)
 
 
@@ -334,7 +335,8 @@ async def google_search_async(search_queries: Union[str, List[str]], max_results
                             'num': num
                         }
                         url = 'https://www.googleapis.com/customsearch/v1'
-                        proxy = os.environ.get("http_proxy")
+                        proxy = 'http://127.0.0.1:7890'
+
                         print(f"Requesting {num} results for '{query}' from Google API...")
 
                         async with aiohttp.ClientSession() as session:
@@ -630,7 +632,7 @@ async def select_and_execute_search(search_api: str, query_list: list[str], para
 
     # 调试信息：打印当前使用的搜索API
     print(f"🔧 调试信息 - 传入的search_api参数: {search_api}")
-    # print(f"🔧 调试信息 - 环境变量SEARCH_API: {os.environ.get('SEARCH_API')}")
+    print(f"🔧 调试信息 - 环境变量SEARCH_API: {os.environ.get('SEARCH_API')}")
     print(f"🔧 调试信息 - 搜索查询: {query_list}")
 
 

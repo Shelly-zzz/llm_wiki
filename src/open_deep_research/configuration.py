@@ -2,7 +2,6 @@ import os
 from enum import Enum
 from dataclasses import dataclass, fields, field
 from typing import Any, Optional, Dict, Literal
-
 from langchain_core.runnables import RunnableConfig
 
 DEFAULT_REPORT_STRUCTURE = """Use this structure to create a report on the user-provided topic:
@@ -69,13 +68,23 @@ class WorkflowConfiguration:
     max_search_depth: int = 2 # Maximum number of reflection + search iterations
     planner_provider: str = "openai"
     planner_model: str = "gpt-4o"
-    planner_model_kwargs: Optional[Dict[str, Any]] = None
+    planner_model_kwargs: Optional[Dict[str, Any]] = field(default_factory=lambda: {"base_url": "https://pro.xiaoai.plus/v1"})
     writer_provider: str = "openai"
     writer_model: str = "gpt-4o"
-    writer_model_kwargs: Optional[Dict[str, Any]] = None
+    writer_model_kwargs: Optional[Dict[str, Any]] = field(default_factory=lambda: {"base_url": "https://pro.xiaoai.plus/v1"})
     trainslate_provider: str = "openai"
     trainslate_model: str = "gpt-4o"
-    trainslate_model_kwargs: Optional[Dict[str, Any]] = None
+    trainslate_model_kwargs: Optional[Dict[str, Any]] = field(default_factory=lambda: {"base_url": "https://pro.xiaoai.plus/v1"})
+    deduplicate_provider: str = "openai"
+    deduplicate_model: str = "gpt-4o"
+    deduplicate_model_kwargs: Optional[Dict[str, Any]] = field(default_factory=lambda: {"base_url": "https://pro.xiaoai.plus/v1"})
+    # # 去重模型配置
+    # deduplicate_provider: str = Field(..., description="去重模型提供商")
+    # deduplicate_model: str = Field(..., description="去重模型名称")
+    # deduplicate_model_kwargs: Optional[Dict] = Field(
+    #     None,
+    #     description="去重模型参数"
+    # )
 
     @classmethod
     def from_runnable_config(

@@ -40,7 +40,7 @@ from open_deep_research.utils import (
     get_today_str
 )
 from open_deep_research.search import select_and_execute_search
-from open_deep_research.post_processing import final_report_post_processing
+from open_deep_research.post_processing import format_adjusting
 
 ## Nodes -- 
 
@@ -455,7 +455,7 @@ def compile_final_report(state: ReportState, config: RunnableConfig):
 
     # Compile final report
     all_sections = "\n\n".join([s.content for s in sections])
-    all_sections = final_report_post_processing(all_sections)
+    # all_sections = final_report_post_processing(all_sections)
     
     print("--"*20)
     print("Final report compiled with sections:")
@@ -520,13 +520,77 @@ async def translate_node(state: ReportState, config: RunnableConfig):
 
     # Generate queries  
     translated_final_report = await structured_llm.ainvoke([SystemMessage(content=system_instructions_query),
-                                     HumanMessage(content="Generate the chinese version of the report.")])
+                                     HumanMessage(content='Generate the chinese version of the report. Specifically, "### Sources" must be translated as "### 资料来源"')])
     print("--"*20)
-    print("Translated Final report")
-    print(translated_final_report)
+    print("Translated Report")
+    # print(translated_final_report)
     print(translated_final_report.translated_report)
     print("--"*20)
     return {"final_report": translated_final_report.translated_report, "source_str": state["source_str"]}
+
+
+async def post_processing(state: ReportState, config: RunnableConfig):
+    print("9. 对报告内容进行后处理（格式调整+语义去重）")
+    """
+    对报告内容进行语义去重，消除不同章节中重复的语义内容
+
+    该节点:
+    1. 调整“资料来源”的位置，统一放到最后；正文中连续两个[x][y]间添加空格，防止md格式解析错误
+    2. 获取翻译后的中文报告，去除各章节间的语义重复
+
+    Args:
+        state: 包含翻译后报告的状态
+        config: 工作流配置
+
+    Returns:
+        包含去重后报告的状态
+    """
+
+    # 获取翻译后的报告
+    final_report = state["final_report"]
+    final_report = format_adjusting(final_report)
+
+    # 获取配置
+    configurable = WorkflowConfiguration.from_runnable_config(config)
+
+    # 初始化去重模型
+    deduplicate_provider = get_config_value(configurable.deduplicate_provider)
+    deduplicate_model_name = get_config_value(configurable.deduplicate_model)
+    deduplicate_model_kwargs = {"base_url": "https://pro.xiaoai.plus/v1"}
+
+    deduplicate_model = init_chat_model(
+        model=deduplicate_model_name,
+        model_provider=deduplicate_provider,
+        model_kwargs=deduplicate_model_kwargs
+    )
+
+    # 构建系统指令
+    system_instructions = (
+        "你是一个专业的文本编辑助手。你的任务是对报告进行语义去重处理。"
+        "请仔细分析报告内容，识别不同章节中表达相同的部分（语义重复）。"
+        "对于重复的语义内容，只保留第一次出现的地方，删除后续重复的部分。"
+        "注意保持报告的整体结构和连贯性，要保留完整的资料来源和正文引用。"
+        "务必注意，不要过多地删减内容，如果没有语义重复，就不需要删减任何内容！"
+    )
+
+    # 用户指令
+    user_instruction = (
+        f"请对以下报告内容进行语义去重处理，对各章节语义重复的信息进行去重，只保留第一次出现的内容：\n\n"
+        f"{final_report}"
+    )
+
+    # 执行去重处理
+    deduplicated_report = await deduplicate_model.ainvoke([
+        SystemMessage(content=system_instructions),
+        HumanMessage(content=user_instruction)
+    ])
+
+    print("--" * 20)
+    print("最终报告:")
+    print(deduplicated_report.content)
+    print("--" * 20)
+
+    return {"final_report": deduplicated_report.content, "source_str": state["source_str"]}
 
 # Report section sub-graph -- 
 
@@ -552,6 +616,7 @@ builder.add_node("gather_completed_sections", gather_completed_sections)
 builder.add_node("write_final_sections", write_final_sections)
 builder.add_node("compile_final_report", compile_final_report)
 builder.add_node("translate", translate_node)
+builder.add_node("post_processing", post_processing)
 
 # Add edges
 builder.add_edge(START, "generate_report_plan")
@@ -560,6 +625,7 @@ builder.add_edge("build_section_with_web_research", "gather_completed_sections")
 builder.add_conditional_edges("gather_completed_sections", initiate_final_section_writing, ["write_final_sections"])
 builder.add_edge("write_final_sections", "compile_final_report")
 builder.add_edge("compile_final_report", "translate")
-builder.add_edge("translate", END)
+builder.add_edge("translate", "post_processing")
+builder.add_edge("post_processing", END)
 
 graph = builder.compile()

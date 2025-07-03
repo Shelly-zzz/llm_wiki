@@ -2,7 +2,7 @@ import re
 from collections import OrderedDict
 
 
-def final_report_post_processing(all_sections: str) -> str:
+def format_adjusting(all_sections: str) -> str:
     """
     Processes a report string to consolidate and re-number sources and update in-text citations.
 
@@ -27,7 +27,7 @@ def final_report_post_processing(all_sections: str) -> str:
     # 1. PARSE AND EXTRACT SOURCES
     for i, section_text in enumerate(sections):
         # Split content and source block within each section
-        parts = re.split(r'### Sources\s*', section_text, maxsplit=1)
+        parts = re.split(r'### 资料来源\s*', section_text, maxsplit=1)
         content = parts[0]
         content_parts.append(content)
 
@@ -52,7 +52,7 @@ def final_report_post_processing(all_sections: str) -> str:
     # { "url": new_number }
     url_to_new_num = {url: i + 1 for i, url in enumerate(unique_sources_map.keys())}
 
-    final_source_list = ["## Sources"]
+    final_source_list = ["## 资料来源"]
     for url, new_num in url_to_new_num.items():
         desc = unique_sources_map[url]['desc']
         final_source_list.append(f"[{new_num}] {desc}: {url}")

@@ -289,7 +289,7 @@ async def google_search_async(search_queries: Union[str, List[str]], max_results
 
     # Check for API credentials from environment variables
     api_key = os.environ.get("GOOGLE_API_KEY")
-    api_key = 'AIzaSyDT4uoSsRbXaGajCNOll7gFDNEuxNS6uPw'
+    # api_key = 'AIzaSyAWVXvTeCmBPg3QWRyxEoVmy0iZiobO1cg'
     cx = os.environ.get("GOOGLE_CX")
     cx = '4390b4fa7a03744d2'
     use_api = bool(api_key and cx)

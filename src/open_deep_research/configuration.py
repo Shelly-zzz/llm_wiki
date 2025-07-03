@@ -2,7 +2,6 @@ import os
 from enum import Enum
 from dataclasses import dataclass, fields, field
 from typing import Any, Optional, Dict, Literal
-
 from langchain_core.runnables import RunnableConfig
 
 DEFAULT_REPORT_STRUCTURE = """Use this structure to create a report on the user-provided topic:
@@ -76,6 +75,16 @@ class WorkflowConfiguration:
     trainslate_provider: str = "openai"
     trainslate_model: str = "gpt-4o"
     trainslate_model_kwargs: Optional[Dict[str, Any]] = None
+    deduplicate_provider: str = "openai"
+    deduplicate_model: str = "gpt-4o"
+    deduplicate_model_kwargs: Optional[Dict[str, Any]] = None
+    # # 去重模型配置
+    # deduplicate_provider: str = Field(..., description="去重模型提供商")
+    # deduplicate_model: str = Field(..., description="去重模型名称")
+    # deduplicate_model_kwargs: Optional[Dict] = Field(
+    #     None,
+    #     description="去重模型参数"
+    # )
 
     @classmethod
     def from_runnable_config(

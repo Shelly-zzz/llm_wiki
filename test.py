@@ -7,10 +7,11 @@ import os
 import sys
 import asyncio
 from dotenv import load_dotenv
-import uuid 
+import uuid
 
 # 加载环境变量
-load_dotenv("/home/xieguangyu/open_deep_research/.env")
+import os
+load_dotenv("./.env")
 
 # 添加项目路径
 sys.path.insert(0, os.getcwd())

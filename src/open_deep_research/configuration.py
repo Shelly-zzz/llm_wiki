@@ -75,6 +75,9 @@ class WorkflowConfiguration:
     trainslate_provider: str = "openai"
     trainslate_model: str = "gpt-4o"
     trainslate_model_kwargs: Optional[Dict[str, Any]] = None
+    deduplicate_provider: str = "openai"
+    deduplicate_model: str = "gpt-4o"
+    deduplicate_model_kwargs: Optional[Dict[str, Any]] = None
 
     @classmethod
     def from_runnable_config(

@@ -550,6 +550,11 @@ async def post_processing(state: ReportState, config: RunnableConfig):
     final_report = state["final_report"]
     final_report = format_adjusting(final_report)
 
+    print("--" * 20)
+    print("格式调整后报告")
+    print(final_report)
+    print("--" * 20)
+
     # 获取配置
     configurable = WorkflowConfiguration.from_runnable_config(config)
 
@@ -569,7 +574,7 @@ async def post_processing(state: ReportState, config: RunnableConfig):
         "你是一个专业的文本编辑助手。你的任务是对报告进行语义去重处理。"
         "请仔细分析报告内容，识别不同章节中表达相同的部分（语义重复）。"
         "对于重复的语义内容，只保留第一次出现的地方，删除后续重复的部分。"
-        "注意保持报告的整体结构和连贯性，资料来源和正文引用要保留完整，不做任何修改。"
+        "注意保持报告的整体结构和连贯性，资料来源和正文引用必须完整保留。"
         "务必注意，不要过多地删减内容，如果没有语义重复，就不需要删减任何内容！"
     )
 

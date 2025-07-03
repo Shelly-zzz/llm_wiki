@@ -34,7 +34,7 @@ def format_adjusting(all_sections: str) -> str:
         if len(parts) > 1:
             sources_text = parts[1]
             # Find all source lines. A source line is assumed to start with a number/bracket.
-            source_lines = re.findall(r'\[?(\d+)\]?\.?\s*(.*?):\s*(https?://\S+)', sources_text)
+            source_lines = re.findall(r'\[?(\d+)\]?\.?\s*(.*?)[：:]\s*(https?://\S+)', sources_text)
 
             for old_num_str, desc, url in source_lines:
                 old_num = int(old_num_str)

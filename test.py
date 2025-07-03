@@ -80,7 +80,7 @@ async def quick_test():
         
         # 创建简单测试状态
         test_state = ReportState(
-            topic="介绍Adam Schiff",
+            topic="介绍Barry Loudermilk",
         )
         
         print(f"主题: {test_state['topic']}")

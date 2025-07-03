@@ -291,7 +291,7 @@ async def google_search_async(search_queries: Union[str, List[str]], max_results
     api_key = os.environ.get("GOOGLE_API_KEY")
     # api_key = 'AIzaSyAWVXvTeCmBPg3QWRyxEoVmy0iZiobO1cg'
     cx = os.environ.get("GOOGLE_CX")
-    cx = '4390b4fa7a03744d2'
+    # cx = '4390b4fa7a03744d2'
     use_api = bool(api_key and cx)
     print('use_api:',use_api)
 

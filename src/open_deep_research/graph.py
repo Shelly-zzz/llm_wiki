@@ -40,7 +40,7 @@ from open_deep_research.utils import (
     get_today_str
 )
 from open_deep_research.search import select_and_execute_search
-from open_deep_research.post_processing import final_report_post_processing
+from open_deep_research.post_processing import format_adjusting
 
 ## Nodes -- 
 
@@ -455,7 +455,7 @@ def compile_final_report(state: ReportState, config: RunnableConfig):
 
     # Compile final report
     all_sections = "\n\n".join([s.content for s in sections])
-    all_sections = final_report_post_processing(all_sections)
+    # all_sections = final_report_post_processing(all_sections)
     
     print("--"*20)
     print("Final report compiled with sections:")
@@ -520,24 +520,23 @@ async def translate_node(state: ReportState, config: RunnableConfig):
 
     # Generate queries  
     translated_final_report = await structured_llm.ainvoke([SystemMessage(content=system_instructions_query),
-                                     HumanMessage(content="Generate the chinese version of the report.")])
+                                     HumanMessage(content='Generate the chinese version of the report. Specifically, "### Sources" must be translated as "### 资料来源"')])
     print("--"*20)
-    print("Translated Final report")
+    print("Translated Report")
     # print(translated_final_report)
     print(translated_final_report.translated_report)
     print("--"*20)
     return {"final_report": translated_final_report.translated_report, "source_str": state["source_str"]}
 
 
-async def semantic_deduplication(state: ReportState, config: RunnableConfig):
-    print("9. 对报告内容进行语义去重处理...")
+async def post_processing(state: ReportState, config: RunnableConfig):
+    print("9. 对报告内容进行后处理（格式调整+语义去重）")
     """
     对报告内容进行语义去重，消除不同章节中重复的语义内容
 
     该节点:
-    1. 获取翻译后的中文报告
-    2. 分析报告内容，识别不同章节中的语义重复
-    3. 只保留第一次出现的语义内容，删除后续重复部分
+    1. 调整“资料来源”的位置，统一放到最后；正文中连续两个[x][y]间添加空格，防止md格式解析错误
+    2. 获取翻译后的中文报告，去除各章节间的语义重复
 
     Args:
         state: 包含翻译后报告的状态
@@ -549,6 +548,7 @@ async def semantic_deduplication(state: ReportState, config: RunnableConfig):
 
     # 获取翻译后的报告
     final_report = state["final_report"]
+    final_report = format_adjusting(final_report)
 
     # 获取配置
     configurable = WorkflowConfiguration.from_runnable_config(config)
@@ -586,7 +586,7 @@ async def semantic_deduplication(state: ReportState, config: RunnableConfig):
     ])
 
     print("--" * 20)
-    print("去重后的报告:")
+    print("最终报告:")
     print(deduplicated_report.content)
     print("--" * 20)
 
@@ -616,7 +616,7 @@ builder.add_node("gather_completed_sections", gather_completed_sections)
 builder.add_node("write_final_sections", write_final_sections)
 builder.add_node("compile_final_report", compile_final_report)
 builder.add_node("translate", translate_node)
-builder.add_node("semantic_deduplication", semantic_deduplication)
+builder.add_node("semantic_deduplication", post_processing)
 
 # Add edges
 builder.add_edge(START, "generate_report_plan")
@@ -625,7 +625,7 @@ builder.add_edge("build_section_with_web_research", "gather_completed_sections")
 builder.add_conditional_edges("gather_completed_sections", initiate_final_section_writing, ["write_final_sections"])
 builder.add_edge("write_final_sections", "compile_final_report")
 builder.add_edge("compile_final_report", "translate")
-builder.add_edge("translate", "semantic_deduplication")  # 翻译 -> 去重
-builder.add_edge("semantic_deduplication", END)         # 去重 -> 结束
+builder.add_edge("translate", "semantic_deduplication")
+builder.add_edge("semantic_deduplication", END)
 
 graph = builder.compile()

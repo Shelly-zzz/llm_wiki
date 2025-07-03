@@ -549,6 +549,7 @@ async def post_processing(state: ReportState, config: RunnableConfig):
     # 获取翻译后的报告
     final_report = state["final_report"]
     final_report = format_adjusting(final_report)
+    print(final_report)
 
     print("--" * 20)
     print("格式调整后报告")

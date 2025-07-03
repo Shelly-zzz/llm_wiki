@@ -34,8 +34,10 @@ def format_adjusting(all_sections: str) -> str:
         if len(parts) > 1:
             sources_text = parts[1]
             # Find all source lines. A source line is assumed to start with a number/bracket.
-            source_lines = re.findall(r'\[?(\d+)\]?\.?\s*(.*?)[：:]\s*((?:https?://|www\.)\S+|\S+\.\S{2,})', sources_text)
-
+            source_lines = re.findall(
+                r'\[?(\d+)\]?\.?\s*(.*?)[：:]\s*((?:https?:\/\/|www\.)\S+(?:\s+\S+)*|\S+(?:\s+\S+)*\.json)',
+                sources_text
+            )
             for old_num_str, desc, url in source_lines:
                 old_num = int(old_num_str)
                 url = url.strip()
@@ -101,6 +103,6 @@ if __name__ == '__main__':
 1. 测试测试：http://www.test.com
 ## 性格特征和决策风格 
 亚当·希夫，作为著名的美国立法者，以其在公共辩论中的强有力沟通技巧和坚定的态度而著称。他的社交媒体活动经常用作倡导正义和平等的平台，突出其原则立场。例如，希夫对司法部的批评强调了他对问责无关政治身份的信念，这一立场通过他坚持“没有人凌驾于法律之上”体现出来[1]。此外，他积极处理诸如医疗保健可及性和消费者权益等问题，反映出对公众福利的关心[1]。 希夫的决策以在伦理考虑基础上的慎重审议为特点。他的立法历史揭示了与州领导合作以促进经济增长和保护基本自由的一贯主题[1]。他在公共沟通中的方法显示了一种对透明度和保障民主原则的承诺。这些元素融合在一起，定义了他的性格和决策风格，其中饱含对正义、平等和有效治理的奉献。 
-### 资料来源
-1. 亚当·希夫：postinfo/亚当·希夫.json """
+### 资料来源 
+[1] 巴里·劳德米尔克社交媒体活动总结：postinfo\Barry Loudermilk.json """
     print(format_adjusting(test_str))

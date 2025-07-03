@@ -335,7 +335,7 @@ async def google_search_async(search_queries: Union[str, List[str]], max_results
                             'num': num
                         }
                         url = 'https://www.googleapis.com/customsearch/v1'
-                        proxy = 'http://127.0.0.1:7890'
+                        proxy = os.environ.get('http_proxy')
 
                         print(f"Requesting {num} results for '{query}' from Google API...")
 
@@ -347,7 +347,7 @@ async def google_search_async(search_queries: Union[str, List[str]], max_results
                                     error_text = await response.text()
                                     print(f"API error: {response.status}, {error_text}")
                                     break
-
+                                # print(response)
                                 data = await response.json()
 
                                 # Process search results
@@ -486,6 +486,7 @@ async def google_search_async(search_queries: Union[str, List[str]], max_results
                                 try:
                                     await asyncio.sleep(0.2 + random.random() * 0.6)
                                     async with session.get(url, headers=headers, timeout=10) as response:
+                                        # print(response)
                                         if response.status == 200:
                                             # Check content type to handle binary files
                                             content_type = response.headers.get('Content-Type', '').lower()

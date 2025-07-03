@@ -41,7 +41,7 @@ from langsmith import traceable
 from open_deep_research.configuration import Configuration
 from open_deep_research.state import Section
 from open_deep_research.prompts import SUMMARIZATION_PROMPT
-
+import datetime
 
 def get_config_value(value):
     """
@@ -1634,7 +1634,10 @@ def stitch_documents_by_url(documents: list[Document]) -> list[Document]:
 
 def get_today_str() -> str:
     """Get current date in a human-readable format."""
-    return datetime.datetime.now().strftime("%a %b %-d, %Y")
+    # return datetime.datetime.now().strftime("%a %b %-d, %Y")
+    # 【zhaiyuxuan】修改以兼容windows系统
+    now = datetime.datetime.now()
+    return now.strftime("%a %b ") + str(now.day) + now.strftime(", %Y")
 
 
 async def load_mcp_server_config(path: str) -> dict:

@@ -74,17 +74,7 @@ class WorkflowConfiguration:
     writer_model_kwargs: Optional[Dict[str, Any]] = field(default_factory=lambda: {"base_url": "https://pro.xiaoai.plus/v1"})
     trainslate_provider: str = "openai"
     trainslate_model: str = "gpt-4o"
-    trainslate_model_kwargs: Optional[Dict[str, Any]] = field(default_factory=lambda: {"base_url": "https://pro.xiaoai.plus/v1"})
-    deduplicate_provider: str = "openai"
-    deduplicate_model: str = "gpt-4o"
-    deduplicate_model_kwargs: Optional[Dict[str, Any]] = field(default_factory=lambda: {"base_url": "https://pro.xiaoai.plus/v1"})
-    # # 去重模型配置
-    # deduplicate_provider: str = Field(..., description="去重模型提供商")
-    # deduplicate_model: str = Field(..., description="去重模型名称")
-    # deduplicate_model_kwargs: Optional[Dict] = Field(
-    #     None,
-    #     description="去重模型参数"
-    # )
+    trainslate_model_kwargs: Optional[Dict[str, Any]] = None
 
     @classmethod
     def from_runnable_config(

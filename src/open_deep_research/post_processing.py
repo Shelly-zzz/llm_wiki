@@ -1,7 +1,7 @@
 import re
 from collections import OrderedDict
 
-
+# 【该函数已弃用】
 def format_adjusting(all_sections: str) -> str:
     """
     Processes a report string to consolidate and re-number sources and update in-text citations.

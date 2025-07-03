@@ -393,13 +393,14 @@ async def write_final_sections(state: SectionState, config: RunnableConfig):
     writer_provider = get_config_value(configurable.writer_provider)
     writer_model_name = get_config_value(configurable.writer_model)
     writer_model_kwargs = get_config_value(configurable.writer_model_kwargs or {})
-    writer_model = init_chat_model(model=writer_model_name, model_provider=writer_provider, model_kwargs=writer_model_kwargs) 
-    
+    writer_model = init_chat_model(model=writer_model_name, model_provider=writer_provider, model_kwargs=writer_model_kwargs)
+
     section_content = await writer_model.ainvoke([SystemMessage(content=system_instructions),
-                                           HumanMessage(content="Generate a report section based on the provided sources.")])
+                                                  HumanMessage(content="根据提供的资料来源生成报告章节，务必把所有英文内容（除了少数不便翻译的专有名词外）都翻译成中文，包括标题和正文")])
     
     # Write content to section 
     section.content = section_content.content
+    print(section.content)
 
     # Write the updated section to completed sections
     return {"completed_sections": [section]}
@@ -455,7 +456,6 @@ def compile_final_report(state: ReportState, config: RunnableConfig):
 
     # Compile final report
     all_sections = "\n\n".join([s.content for s in sections])
-    # all_sections = final_report_post_processing(all_sections)
     
     print("--"*20)
     print("Final report compiled with sections:")
@@ -488,49 +488,52 @@ def initiate_final_section_writing(state: ReportState):
     ]
 
 
-async def translate_node(state: ReportState, config: RunnableConfig):
-    print("8. Translating the final report...")
-    """
-    Translate the compiled report into the target language.
-    
-    This node produces a translated version of the final report
-    
-    Args:
-        state: final report with English version
-        
-    Returns:
-        Dict containing the translated report
-    """
-
-    # Get sections
-    final_report = state["final_report"]
-    configurable = WorkflowConfiguration.from_runnable_config(config)
-    # Update sections with completed content while maintaining original order
-    trainslate_provider = get_config_value(configurable.trainslate_provider)
-    trainslate_model_name = get_config_value(configurable.trainslate_model)
-    trainslate_model_kwargs = get_config_value(configurable.trainslate_model_kwargs or {})
-    trainslate_model_kwargs = {"base_url":"https://pro.xiaoai.plus/v1"}
-    trainslate_model = init_chat_model(model=trainslate_model_name, model_provider=trainslate_provider, model_kwargs=trainslate_model_kwargs) 
-    structured_llm = trainslate_model.with_structured_output(Report)
-
-    # Format system instructions
-    system_instructions_query = translate_instruction.format(
-        input_text=final_report,
-    )
-
-    # Generate queries  
-    translated_final_report = await structured_llm.ainvoke([SystemMessage(content=system_instructions_query),
-                                     HumanMessage(content='Generate the chinese version of the report. Specifically, "### Sources" must be translated as "### 资料来源"')])
-    print("--"*20)
-    print("Translated Report")
-    # print(translated_final_report)
-    print(translated_final_report.translated_report)
-    print("--"*20)
-    return {"final_report": translated_final_report.translated_report, "source_str": state["source_str"]}
+# async def translate_node(state: ReportState, config: RunnableConfig):
+#     print("跳过翻译步骤")
+#     return {"final_report": state["final_report"], "source_str": state["source_str"]}
+#
+#     print("8. Translating the final report...")
+#     """
+#     Translate the compiled report into the target language.
+#
+#     This node produces a translated version of the final report
+#
+#     Args:
+#         state: final report with English version
+#
+#     Returns:
+#         Dict containing the translated report
+#     """
+#
+#     # Get sections
+#     final_report = state["final_report"]
+#     configurable = WorkflowConfiguration.from_runnable_config(config)
+#     # Update sections with completed content while maintaining original order
+#     trainslate_provider = get_config_value(configurable.trainslate_provider)
+#     trainslate_model_name = get_config_value(configurable.trainslate_model)
+#     trainslate_model_kwargs = get_config_value(configurable.trainslate_model_kwargs or {})
+#     trainslate_model_kwargs = {"base_url":"https://pro.xiaoai.plus/v1"}
+#     trainslate_model = init_chat_model(model=trainslate_model_name, model_provider=trainslate_provider, model_kwargs=trainslate_model_kwargs)
+#     structured_llm = trainslate_model.with_structured_output(Report)
+#
+#     # Format system instructions
+#     system_instructions_query = translate_instruction.format(
+#         input_text=final_report,
+#     )
+#
+#     # Generate queries
+#     translated_final_report = await structured_llm.ainvoke([SystemMessage(content=system_instructions_query),
+#                                      HumanMessage(content='Generate the chinese version of the report. Specifically, "### Sources" must be translated as "### 资料来源"')])
+#     print("--"*20)
+#     print("Translated Report")
+#     # print(translated_final_report)
+#     print(translated_final_report.translated_report)
+#     print("--"*20)
+#     return {"final_report": translated_final_report.translated_report, "source_str": state["source_str"]}
 
 
 async def post_processing(state: ReportState, config: RunnableConfig):
-    print("9. 对报告内容进行后处理（格式调整+语义去重）")
+    print("8. 对报告内容进行后处理（格式调整+语义去重）")
     """
     对报告内容进行语义去重，消除不同章节中重复的语义内容
 
@@ -576,10 +579,11 @@ async def post_processing(state: ReportState, config: RunnableConfig):
         "请按照以下工作流完成后处理任务：\n"
         "1.将每条'### 资料来源'的内容整理为这样的格式：[编号] 标题：URL或文件路径。"
         "例如：'[1] 巴里·劳德米尔克: postinfo\Barry Loudermilk.json'或者是'[2] 美国众议院书记官办公室 - 巴里·劳德米尔克: https://clerk.house.gov/members/L000583'"
-        "如果资料来源存在信息缺失（例如缺少标题、缺少URL或文件路径），则删除这条资料来源。\n"
+        "如果资料来源存在信息缺失（例如缺少标题、缺少URL或文件路径），则删除这条资料来源。注意，必须要有具体的标题和具体的URL或文件路径！像'[13] 资料来源标题: URL'这样的，视为既没有具体标题又没有具体URL，需要删除。没有写URL或文件路径的也要删除\n"
         "2.将所有'### 资料来源'整合起来，按照URL或文件路径进行去重，并重新从1到n进行标号，统一放到报告的最后，记录在'## 资料来源'下（注意改为二级标题）。注意正文中引用的资料来源也需要跟着重新标号\n"
         "3.正文中如果出现连续两个以上的引用（比如'[2][3]'），引用标号之间必须留一个空格（要改为'[2] [3]'）\n"
-        "4.对报告正文（不包括资料来源部分）进行语义去重。具体来说，需要识别不同章节中意思相近或表达相同的部分，对于重复的语义内容，只保留第一次出现的地方，删除后续重复的部分。"
+        "4.将内容翻译为中文（包括标题、正文、资料来源）。特别地，若涉及人名翻译，首次出现时需在中文译名后以括号标注原名，例如将'Adam Schiff'译为'亚当·希夫(Adam Schiff)'，后续再次出现时只使用中文译名'亚当·希夫'。"
+        "5.对报告正文（不包括资料来源部分）进行语义去重。具体来说，需要识别不同章节中意思相近或表达相同的部分，对于重复的语义内容，只保留第一次出现的地方，删除后续重复的部分。"
         "务必注意，不要过多地删减内容，如果没有语义重复，则不需要删减任何内容！"
     )
 
@@ -625,7 +629,7 @@ builder.add_node("build_section_with_web_research", section_builder.compile())
 builder.add_node("gather_completed_sections", gather_completed_sections)
 builder.add_node("write_final_sections", write_final_sections)
 builder.add_node("compile_final_report", compile_final_report)
-builder.add_node("translate", translate_node)
+# builder.add_node("translate", translate_node)
 builder.add_node("post_processing", post_processing)
 
 # Add edges
@@ -634,8 +638,9 @@ builder.add_edge("generate_report_plan", "human_feedback")
 builder.add_edge("build_section_with_web_research", "gather_completed_sections")
 builder.add_conditional_edges("gather_completed_sections", initiate_final_section_writing, ["write_final_sections"])
 builder.add_edge("write_final_sections", "compile_final_report")
-builder.add_edge("compile_final_report", "translate")
-builder.add_edge("translate", "post_processing")
+# builder.add_edge("compile_final_report", "translate")
+# builder.add_edge("translate", "post_processing")
+builder.add_edge("compile_final_report", "post_processing")
 builder.add_edge("post_processing", END)
 
 graph = builder.compile()

@@ -616,7 +616,7 @@ builder.add_node("gather_completed_sections", gather_completed_sections)
 builder.add_node("write_final_sections", write_final_sections)
 builder.add_node("compile_final_report", compile_final_report)
 builder.add_node("translate", translate_node)
-builder.add_node("semantic_deduplication", post_processing)
+builder.add_node("post_processing", post_processing)
 
 # Add edges
 builder.add_edge(START, "generate_report_plan")
@@ -625,7 +625,7 @@ builder.add_edge("build_section_with_web_research", "gather_completed_sections")
 builder.add_conditional_edges("gather_completed_sections", initiate_final_section_writing, ["write_final_sections"])
 builder.add_edge("write_final_sections", "compile_final_report")
 builder.add_edge("compile_final_report", "translate")
-builder.add_edge("translate", "semantic_deduplication")
-builder.add_edge("semantic_deduplication", END)
+builder.add_edge("translate", "post_processing")
+builder.add_edge("post_processing", END)
 
 graph = builder.compile()
